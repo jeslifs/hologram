@@ -2,6 +2,8 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/examples/jsm/Addons.js'
 import GUI from 'lil-gui'
+import Vertex from './shaders/hologram/vertex.glsl'
+import Fragment from './shaders/hologram/fragment.glsl'
 
 
 /**
@@ -14,6 +16,7 @@ const gltfLoader = new GLTFLoader()
  */
 // Debug
 const gui = new GUI()
+const parameters = {}
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
@@ -24,24 +27,38 @@ const scene = new THREE.Scene()
 /**
  * Update all materials
  */
+parameters.color = '#70c1ff'
 
+gui.addColor(parameters, 'color').onChange(()=>{
+    material.uniforms.uColor.value.set(parameters.color)
+})
 
 /**
  * Objects
  */
 // Material
 const material = new THREE.ShaderMaterial({
-    wireframe: true
+    // wireframe: true,
+    vertexShader: Vertex,
+    fragmentShader: Fragment,
+    uniforms: {
+        uTime: new THREE.Uniform(0),
+        uColor: new THREE.Uniform(new THREE.Color(parameters.color))
+    },
+    transparent: true,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
 })
 
 const mesh = new THREE.Mesh(
-    new THREE.BoxGeometry(),
+    new THREE.BoxGeometry(1, 1, 1,16, 16),
     material
 )
 scene.add(mesh)
 
 const mesh2 = new THREE.Mesh(
-    new THREE.TorusKnotGeometry(),
+    new THREE.TorusKnotGeometry(0.6, 0.25, 128, 32),
     material
 )
 mesh2.position.x = 4
@@ -121,15 +138,22 @@ const tick = () =>
 {
     const elapsedTime = clock.getElapsedTime()
 
-    // update meshed
-    mesh.rotation.y = elapsedTime
-    mesh2.rotation.y = elapsedTime
-    mesh3.rotation.y = elapsedTime
+    // update uniform 
+    material.uniforms.uTime.value = elapsedTime
+
+    // rotate meshed
+    mesh.rotation.y = elapsedTime * 0.2
+    mesh2.rotation.y = elapsedTime * 0.2
+    mesh3.rotation.y = elapsedTime * 0.2
+
+    mesh.rotation.x = elapsedTime * 0.2
+    mesh2.rotation.x = elapsedTime * 0.2
+    mesh3.rotation.x = elapsedTime * 0.2
 
     if(burger)
     {
-        burger.rotation.y = elapsedTime
-        burger.rotation.x = elapsedTime
+        burger.rotation.y = elapsedTime * 0.2
+        burger.rotation.x = elapsedTime * 0.2
     }
 
     // Update controls
